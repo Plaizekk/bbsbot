@@ -1,0 +1,1 @@
+[null,{"name":"play","temp":"","event-type":"1","actions":[{"gameName":"Epic Raids","gameLink":"","name":"Set Bot Game"}]},{"name":"NewEvent","temp":"86400","event-type":"3","actions":[{"info":"3","find":"","storage":"1","varName":"gq","name":"Find Member"},{"channel":"4","varName":"","message":"reminder","storage":"1","varName2":"gq","name":"Send Message"}]}]
