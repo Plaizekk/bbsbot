@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Add Embed Field",
+name: "Convert Seconds To D/H/M/S",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,8 @@ name: "Add Embed Field",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Embed Message",
+section: "Other Stuff",
+
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,7 +24,7 @@ section: "Embed Message",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	return `${data.name} - ${data.message}`;
+return `Convert ${data.time}`;
 },
 
 //---------------------------------------------------------------------
@@ -33,19 +34,31 @@ subtitle: function(data) {
 	 // about the mods for people to see in the list.
 	 //---------------------------------------------------------------------
 
-	 // Who made the mod (If not set, defaults to "DBM Mods")
-	 author: "DBM, Aioi & MrGold",
+ // Who made the mod (If not set, defaults to "DBM Mods")
+ author: "Aamon", //Idea by Tresmos    // I don't know who Tremos is but 'heya' =]]]
 
-	 // The version of the mod (Defaults to 1.0.0)
-	 version: "1.9.4", //Added in 1.8.2
+ // The version of the mod (Defaults to 1.0.0)
+ version: "1.9.4", //not added yet....
 
-	 // A short description to show on the mod line for this mod (Must be on a single line)
-	 short_description: "Changed category and added blank field feature",
+ // A short description to show on the mod line for this mod (Must be on a single line)
+ short_description: "Convert Seconds to Days, Hours, Minutes and Seconds.",
 
-	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
+ // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
 
 
-	 //---------------------------------------------------------------------
+ //---------------------------------------------------------------------
+
+//---------------------------------------------------------------------
+// Action Storage Function
+//
+// Stores the relevant variable info for the editor.
+//---------------------------------------------------------------------
+
+variableStorage: function(data, varType) {
+		const type = parseInt(data.storage);
+		if(type !== varType) return;
+		return ([data.varName, 'Date']);
+	},
 
 
 //---------------------------------------------------------------------
@@ -56,7 +69,7 @@ subtitle: function(data) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["storage", "varName", "fieldName", "message", "inline"],
+fields: ["time", "storage", "varName"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -76,36 +89,31 @@ fields: ["storage", "varName", "fieldName", "message", "inline"],
 
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods</p></div><br>
-<div>
-	<div style="float: left; width: 35%;">
-		Source Embed Object:<br>
-		<select id="storage" class="round" onchange="glob.refreshVariableList(this)">
-			${data.variables[1]}
+	<div style="float: left; width: 95%; padding-top: 8px;">
+		<p><u>Mod Info:</u><br>
+		Made by <b>Aamon</b>! <br> Convert seconds to Days Hours Minutes and Seconds.</p>
+	</div>
+	<br><br><br>
+	<div style="float: left; width: 70%; padding-top: 8px;">
+		Seconds to Convert:
+		<input id="time" class="round" type="text" placeholder="e.g. 1522672056 or use Variables">
+	</div>
+	<div style="float: left; width: 35%; padding-top: 8px;">
+		Store Result In:<br>
+		<select id="storage" class="round" onchange="glob.variableChange(this, 'varNameContainer')">
+		${data.variables[0]}
 		</select>
 	</div>
-	<div id="varNameContainer" style="float: right; width: 60%;">
+	<div id="varNameContainer" style="float: right; display: none; width: 60%; padding-top: 8px;">
 		Variable Name:<br>
-		<input id="varName" class="round varSearcher" type="text" list="variableList"><br>
-	</div>
-</div><br><br><br>
-<div style="padding-top: 8px;">
-	<div style="float: left; width: 50%;">
-		Field Name:<br>
-		<input id="fieldName" placeholder="Optional" class="round" type="text">
-	</div>
-	<div style="float: left; width: 50%;">
-		Display Inline:<br>
-		<select id="inline" class="round">
-			<option value="0">Yes</option>
-			<option value="1" selected>No</option>
-		</select>
-	</div>
-</div><br><br><br>
-<div style="padding-top: 8px;">
-	Field Description:<br>
-	<textarea id="message" rows="7.5" placeholder="Insert message here... (Optional)" style="width: 99%; font-family: monospace; white-space: nowrap; resize: none;"></textarea>
-</div>`
+		<input id="varName" class="round" type="text">
+	</div><br><br>
+	<div style=" float: left; width: 88%; padding-top: 8px;">
+		<br>
+		<p>
+			For aditional information contact <b>Aamon#9130</b> on Discord or <a href ="https://twitter.com/44m0n"><b>@44m0n<b></a> on Twitter. 
+		</p>
+	</div>`;
 },
 
 //---------------------------------------------------------------------
@@ -117,6 +125,9 @@ html: function(isEvent, data) {
 //---------------------------------------------------------------------
 
 init: function() {
+	const {glob, document} = this;
+
+	glob.variableChange(document.getElementById('storage'), 'varNameContainer');
 },
 
 //---------------------------------------------------------------------
@@ -128,20 +139,52 @@ init: function() {
 //---------------------------------------------------------------------
 
 action: function(cache) {
+
 	const data = cache.actions[cache.index];
+	const time = this.evalMessage(data.time, cache);
+	var   _this = this; // this is needed sometimes.
 
-	const storage = parseInt(data.storage);
-	const varName = this.evalMessage(data.varName, cache);
-	const embed = this.getVariable(storage, varName, cache);
+    // Main code.
 
-	const name = this.evalMessage(data.fieldName, cache);
-	const message = this.evalMessage(data.message, cache);
 
-	const inline = Boolean(data.inline === "0");
-	if(embed && embed.addField) {
-		embed.addField(name ? name : '\u200B', message ? message : '\u200B', inline);
+
+	
+	let d, h, m, s;
+	let result;
+
+	if (isNaN(time)) {
+		result.toString() = "Invalid Date";
+		console.log('Please insert a number');
 	}
-	this.callNextAction(cache);
+	else {
+
+		s = time;
+
+
+		m = Math.floor(s / 60);
+		s = s % 60;
+		h = Math.floor(m / 60);
+		m = m % 60;
+		d = Math.floor(h / 24);
+		h = h % 24;
+
+		result = d + "d " + h + "h " + m + "m " + s + "s";
+
+	}
+		//return { days: d, hours: h, minutes: m, seconds: s }
+	
+
+
+	
+	if (result.toString() === "Invalid Date") result = undefined;
+
+    // Storage.
+	if(result !== undefined) {
+		const storage = parseInt(data.storage);
+		const varName = this.evalMessage(data.varName, cache);
+		this.storeValue(result, storage, varName, cache);
+	}
+    this.callNextAction(cache);
 },
 
 //---------------------------------------------------------------------
